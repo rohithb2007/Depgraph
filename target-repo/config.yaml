@@ -1,0 +1,8 @@
+app_name: DepGraph Demo Service
+version: 1.0.0
+max_retries: 3
+endpoints:
+  - name: health
+    path: /health
+  - name: status
+    path: /status
