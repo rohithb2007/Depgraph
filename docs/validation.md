@@ -29,7 +29,7 @@ The Windows agent sandbox blocks loopback connections and some process terminati
 
 ## Not claimed as verified
 
-Live Gemini calls were not made; there was no configured key/model. The CI matrix is configured but has not been executed remotely. Docker build/runtime has not been validated in this session. No load, hostile-code containment, or production deployment claim is made.
+Live Gemini calls were not made; there was no configured key/model. The CI matrix was initially only configured; remote hardening checks are described below. Docker build/runtime has not been validated in this session. No load, hostile-code containment, or production deployment claim is made.
 
 ## October 29, 2026 hardening pass
 
@@ -37,7 +37,8 @@ Live Gemini calls were not made; there was no configured key/model. The CI matri
   printing values, credential-file detection, subprocess environment allowlisting, AI opt-in,
   AI rejection of credential-bearing source, and cross-site HTTP/read restrictions.
 - Installed core, development, auditing, and optional AI dependencies were checked with pip-audit;
-  no known vulnerabilities were reported at the time of the audit. No live AI requests were made.
+  all 53 installed dependencies had no known vulnerabilities reported at the time of the audit.
+  No live AI requests were made.
 - GitHub reported secret scanning and push protection already enabled. Dependabot security updates
   and private vulnerability reporting were enabled. The API continued reporting non-provider
   pattern scanning disabled after an enable request, so that optional feature is not claimed enabled.
@@ -45,3 +46,9 @@ Live Gemini calls were not made; there was no configured key/model. The CI matri
   actions are pinned to official immutable revisions; checkout does not retain authentication credentials.
 - Credential exclusions, redacted command output, wheel-only target installs, and explicit AI consent
   reduce accidental leaks. They do not turn host execution into a secure sandbox or guarantee safety.
+- The real packaging upgrade fixture also passed under the stricter environment and wheel-only policy.
+- Remote security auditing and Linux test jobs passed. Hosted Windows temporary-directory aliases
+  exposed a fixture path-comparison bug; the rollback fault-injection test now compares canonical paths.
+  The exception and full-byte-restoration assertions remain intact. Workflow actions now use pinned
+  Node 24-compatible revisions. Current platform results are available in
+  [GitHub Actions](https://github.com/rohithb2007/Depgraph/actions).

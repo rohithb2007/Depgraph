@@ -14,7 +14,7 @@ class ProjectCase(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.repo = self.root / "project"
         self.repo.mkdir()
         (self.repo / "tests").mkdir()
@@ -83,7 +83,7 @@ class EngineTests(ProjectCase):
         original = module.os.replace
 
         def fail_second(src, dst):
-            if Path(dst) == self.repo / "requirements.txt":
+            if Path(dst).resolve() == (self.repo / "requirements.txt").resolve():
                 raise OSError("injected disk failure")
             return original(src, dst)
 
