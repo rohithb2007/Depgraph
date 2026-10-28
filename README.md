@@ -1,145 +1,135 @@
-# DepGraph 🚀
-> **Autonomous Dependency Upgrade & Self-Healing Agent for Google Cloud**
-> Built for the *All Things Agentic Hackathon*.
+# DepGraph
 
-DepGraph automatically scans Python repositories for outdated dependencies, evaluates upgrade risk & security vulnerabilities (via OSV), attempts automated upgrades in isolated transactions, diagnoses test failures using **Gemini**, applies safe code repair patches, and generates visual HTML execution reports.
+**Dependency upgrades that earn their way into your codebase.**
 
----
+DepGraph is a local Python dependency maintenance workbench. It establishes a passing baseline, evaluates upgrades in disposable workspaces, gates candidates on security policy, and produces verified patches for review. Optional Gemini diagnosis can propose small compatibility repairs; deterministic checks and another test run decide whether they survive.
 
-## 🛠️ Key Features
-- 🔍 **Dependency Graph & Usage Scanner**: Identifies used vs. unused packages and third-party imports (`graph.py`, `scan.py`).
-- 🛡️ **Risk & Security Analysis**: Computes composite risk scores (0–100) and queries OSV for known CVEs (`risk.py`, `security.py`).
-- 🔄 **Transactional Upgrade & Rollback**: Snapshots repository state before applying changes, committing on success or rolling back cleanly on failure (`transaction.py`).
-- 🤖 **Gemini AI Diagnosis & Safe Patching**: Diagnoses breaking API changes on test failure and generates minimal code patches (`diagnose.py`, `patch.py`).
-- 📊 **Static HTML Report Generation**: Exports self-contained execution reports (`report.py`).
-- ☁️ **Cloud Run Ready**: Exposes a REST API (`api.py`) for containerized deployment on Google Cloud Run.
+The dashboard connects import impact, upgrade decisions, subprocess evidence, and source diffs. The CLI uses the same engine.
 
----
+## Start in two minutes
 
-## 💻 Local Setup & Prerequisites
+Python 3.11+ with `venv` and `pip` is required.
 
-### 1. Requirements
-- Python 3.11+
-- Google Gemini API Key (`GEMINI_API_KEY`)
-
-### 2. Installation
-```bash
-git clone <repo-url>
-cd depgraph
-pip install -r agent/requirements.txt
-```
-
-### 3. Environment Variables
-Set your Gemini API key in your environment (do **not** commit keys or `.env` files):
-
-**Linux / macOS:**
-```bash
-export GEMINI_API_KEY="your-gemini-api-key-here"
-```
-
-**Windows (PowerShell):**
 ```powershell
-$env:GEMINI_API_KEY="your-gemini-api-key-here"
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+.\.venv\Scripts\python.exe -m depgraph serve
 ```
 
----
+Open **http://127.0.0.1:8080** and select **Run offline demo**.
 
-## 🚀 Running DepGraph
-
-### Option A: CLI Execution
-Run DepGraph directly against any target Python repository (e.g. `target-repo`):
+On Linux/macOS, use `python3 -m venv .venv`, then `.venv/bin/python` in place of the Windows executable. After activating the environment, all examples below work as written.
 
 ```bash
-python agent/agent.py target-repo
+python -m depgraph demo
 ```
 
-### Option B: Local HTTP API Server
-Start the HTTP API server locally:
+The offline fixture executes four real unittest contracts against local API versions:
+
+| Package | Change | Verified outcome |
+| --- | --- | --- |
+| responsekit | 1.0.0 → 2.0.0 removes a float alias | Failure diagnosed by an explicit fixture rule; source repaired; tests pass |
+| formatkit | 1.0.0 → 1.1.0 preserves its API | Clean upgrade; tests pass |
+| guardkit | 1.0.0 → 2.0.0 changes authorization behavior | Contract fails; candidate rolled back |
+
+**Demo results are labeled fixture data.** The demo does not query PyPI/OSV, invoke Gemini, or install these fictional packages. Its tests actually run in subprocesses against versioned local modules. Demo patches cannot be applied to real projects.
+
+## Analyze a real project
+
+Supported input: a Python repository with a root `requirements.txt` containing exact `name==version` pins and a pytest-compatible test suite. Extras, environment markers, and inline comments are preserved. Ranges, editable installs, URLs, recursive includes, wildcard pins, and duplicate packages fail explicitly.
 
 ```bash
-python agent/api.py
-```
-The server will start on `http://localhost:8080`.
-
-#### API Endpoints
-- **Health Check**: `GET /health`
-  ```bash
-  curl http://localhost:8080/health
-  ```
-  Returns `{"status": "healthy", "service": "depgraph-agent"}`
-
-- **Trigger Workflow**: `POST /run` or `GET /run`
-  ```bash
-  curl -X POST http://localhost:8080/run
-  ```
-  Triggers DepGraph analysis on `target-repo`, performs upgrades/repairs, and generates `depgraph_report.html`.
-
-- **View HTML Report**: `GET /report`
-  ```bash
-  curl http://localhost:8080/report
-  ```
-  Renders the generated execution report.
-
----
-
-## ☁️ Google Cloud Run Deployment
-
-Deploy DepGraph to Google Cloud Run as a stateless containerized service:
-
-### 1. Build & Deploy with Google Cloud CLI
-```bash
-# Set your GCP Project ID
-gcloud config set project YOUR_PROJECT_ID
-
-# Deploy directly to Cloud Run from source
-gcloud run deploy depgraph-agent \
-  --source . \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --set-env-vars GEMINI_API_KEY="your-gemini-api-key-here"
+python -m depgraph analyze /path/to/repository --trust-repo
 ```
 
-### 2. Secret Manager Integration (Recommended for Production)
-Store your API key in GCP Secret Manager:
-```bash
-gcloud secrets create GEMINI_API_KEY --replication-policy="automatic"
-echo -n "your-api-key" | gcloud secrets versions add GEMINI_API_KEY --data-file=-
+`--trust-repo` acknowledges that installation hooks and tests execute code. Analysis keeps original source unchanged. Real validation creates a fresh virtual environment for every attempt, installs dependencies plus pytest, runs `pip check`, runs tests, and captures `pip freeze --all` on success.
 
-gcloud run deploy depgraph-agent \
-  --source . \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest
-```
-
----
-
-## 🧪 Hackathon Deterministic Fixture (`target-repo`)
-
-The repository includes a deterministic demo target in `target-repo/`:
-- **Outdated Package**: `numpy==1.23.5` (PyPI latest: `2.4.6`).
-- **Code Pattern**: `app.py` uses `np.float(...)` (removed in NumPy 1.24).
-- **Workflow Demonstrated**:
-  1. DepGraph detects outdated `numpy`.
-  2. Bumps `numpy` to `2.4.6`.
-  3. Tests fail with `AttributeError: module 'numpy' has no attribute 'float'`.
-  4. Gemini diagnoses breaking alias removal in NumPy 1.24.
-  5. DepGraph applies code patch replacing `np.float` with Python `float`.
-  6. Tests pass; transaction commits.
-  7. `depgraph_run_log.json` and `depgraph_report.html` are generated.
-
----
-
-## 🧪 Running Unit Tests
-
-Run the full test suite (60 tests):
+Defaults exclude major upgrades, prereleases, yanked releases, interpreter-incompatible releases, vulnerable candidates, and candidates whose security lookup failed.
 
 ```bash
-python agent/tests/test_api.py -v
-python agent/tests/test_report.py -v
-python agent/tests/test_graph.py -v
-python agent/tests/test_agent_integration.py -v
-python agent/tests/test_transaction.py -v
-python agent/tests/test_risk.py -v
-python agent/tests/test_security.py -v
+# Explicitly consider major upgrades
+python -m depgraph analyze /path/to/repository --trust-repo --allow-major
+
+# Explicitly permit an unavailable OSV result (known vulnerable versions remain blocked)
+python -m depgraph analyze /path/to/repository --trust-repo --allow-unknown-security
+
+# Enable the dashboard for exactly one trusted repository
+python -m depgraph serve --repo /path/to/repository --trust-repo
 ```
+
+Versions are selected for the interpreter running DepGraph. PyPI metadata compatibility is preliminary; pip installation establishes whether an actual distribution can be installed on the current platform.
+
+## Review, export, apply
+
+```bash
+python -m depgraph show RUN_ID
+python -m depgraph report RUN_ID --output execution-report.html
+python -m depgraph apply RUN_ID
+```
+
+Run JSON artifacts live in `.depgraph/runs/` by default. Use the global `--state PATH` option **before** the subcommand to use another directory. The dashboard exports the full JSON evidence bundle; the report command generates a portable, self-contained HTML report.
+
+Apply is separate from analysis. It verifies event integrity, the patch digest, the complete source inventory, allowed paths, and exact file preimages. A repository lock prevents concurrent DepGraph applies. Files are replaced individually; caught apply failures restore the original bytes. This is not an atomic multi-file filesystem transaction: abrupt power loss or process termination during apply requires manual recovery from the stored `before` contents and inspection of `.depgraph/apply.lock`.
+
+## Optional AI repair
+
+```bash
+python -m pip install -e ".[ai]"
+```
+
+Set `GEMINI_API_KEY` and `DEPGRAPH_MODEL` in your environment to a model available to your account. No model name is assumed. Gemini receives the selected application's source and failing test output; enable it only when you accept sending that content to the provider. Never put credentials in source control.
+
+Repairs are attempted only after a passing baseline, successful installation, and a test-stage regression. At most three importing application files are considered, one proposal per file. Tests are protected. Proposed changes must match a unique source span, parse as Python, preserve assertion count, and avoid adding exception handlers. Failed proposals are reverted. These checks constrain edits; they do not prove semantic correctness or make generated code trustworthy. Without configured AI, a failing real upgrade is rolled back.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    UI[Local dashboard / CLI] --> Engine[Maintenance engine]
+    Engine --> Source[Manifest + AST import impact]
+    Source --> Copy[Disposable source copy]
+    Copy --> Baseline[Baseline install + tests]
+    Baseline --> Registry[PyPI candidate + OSV gate]
+    Registry --> Upgrade[One dependency at a time]
+    Upgrade --> Validate[Fresh venv / pip check / pytest]
+    Validate -->|regression| Repair[Optional model proposal]
+    Repair --> Checks[Deterministic edit checks]
+    Checks --> Validate
+    Validate -->|passed| Patch[Verified cumulative patch]
+    Validate -->|failed| Reject[Restore candidate snapshot]
+    Patch --> Review[Diff + evidence review]
+    Review --> Apply[Explicit apply with freshness checks]
+    Engine --> Evidence[Atomic JSON / hash-linked events / HTML report]
+```
+
+The AST graph maps source imports to declared dependencies. It is **not** a full transitive dependency graph. Resolved environment versions are captured separately by pip. Risk scores are explainable heuristics, not probabilities. Candidates are evaluated sequentially against the previously accepted workspace state.
+
+## Engineering checks
+
+```bash
+python -m pytest -q
+python -m ruff check depgraph tests
+python -m ruff format --check depgraph tests
+python -m depgraph demo
+```
+
+Tests cover actual fixture execution, baseline gating, installation failure classification, security defaults, rollback, stale-source rejection, patch/event tampering, partial apply failure, parser edge cases, real command timeouts, escaped reports, HTTP origin/token checks, and async run persistence. CI is configured for Python 3.11–3.13 on Windows and Linux; local results are documented in [validation.md](docs/validation.md).
+
+## Container demo
+
+```bash
+docker build -t depgraph .
+docker run --rm --network none depgraph
+```
+
+The image runs the offline CLI demo as a non-root user. Container build needs access to the Python package registry. The local workbench intentionally binds to loopback; this is not a public SaaS deployment.
+
+## Scope and trust
+
+This release is a single-user local developer tool. Disposable copies and virtual environments isolate source changes and dependencies; **they do not sandbox malicious code**. Run only trusted repositories on the host. Host filesystem and network access remain possible from target execution. Common credential environment variables and `.env`, `.key`, and `.pem` files are omitted from execution, but this is not a complete secret isolation mechanism.
+
+OSV is checked for direct upgrade candidates; transitive vulnerability auditing, lockfile generation with artifact hashes, multi-language manifests, hostile-code container execution, distributed workers, and automatic PR publication are not implemented. Hash-linked logs detect accidental edits relative to the stored chain; an actor who can rewrite the whole artifact can regenerate hashes. Current run history loads complete artifacts and is intended for local project scale.
+
+See [architecture and tradeoffs](docs/architecture.md), [the interview demo guide](docs/demo-guide.md), and [validation evidence](docs/validation.md).
+
+The original hackathon implementation remains under `agent/` as historical reference. Its previous README, including the architecture diagram added before this rebuild, is preserved in [legacy-prototype.md](docs/legacy-prototype.md). Use the `depgraph` package and commands above for current development; the legacy HTTP server is not the supported entrypoint.

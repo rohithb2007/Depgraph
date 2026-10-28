@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DepGraph · Maintenance workbench</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="/"
+        ><span class="brand-icon">⌘</span> depgraph<span class="version"
+          >/ 02</span
+        ></a
+      >
+      <div class="workspace">
+        <span class="workspace-icon">D</span>
+        <div>Local workspace<small>Dependency intelligence</small></div>
+        <span class="dot"></span>
+      </div>
+      <div class="nav-label">WORKSPACE</div>
+      <button class="nav active" id="overview-nav">
+        <span>◈</span> Maintenance overview
+      </button>
+      <div class="nav-label history-label">
+        EXECUTION HISTORY <span id="history-count">0</span>
+      </div>
+      <div id="history" class="history">
+        <p class="muted empty-history">Your first run starts here.</p>
+      </div>
+      <div class="sidebar-bottom">
+        <span class="dot"></span> Local engine connected<small
+          >Source changes require review.</small
+        >
+      </div>
+    </aside>
+    <main>
+      <header>
+        <div>
+          <span class="breadcrumb">Workspace</span
+          ><span class="slash">/</span> Overview
+        </div>
+        <span class="local-pill"
+          ><span class="dot"></span> LOCAL DEVELOPMENT</span
+        >
+      </header>
+      <section class="page-heading">
+        <div>
+          <div class="eyebrow">DEPENDENCY MAINTENANCE, WITH EVIDENCE</div>
+          <h1>Keep moving. Break less.</h1>
+          <p>
+            A controlled path from outdated dependencies to verified upgrades.
+          </p>
+        </div>
+        <button class="primary" id="demo-button">
+          ▶ &nbsp; Run offline demo
+        </button>
+      </section>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <section class="metrics" aria-label="Run metrics">
+        <article>
+          <div class="metric-label">DEPENDENCIES <span>◈</span></div>
+          <strong id="metric-deps">—</strong
+          ><small id="metric-deps-note">Awaiting analysis</small>
+        </article>
+        <article>
+          <div class="metric-label">VERIFIED UPGRADES <span>↗</span></div>
+          <strong id="metric-verified">—</strong
+          ><small>Passed installation & tests</small>
+        </article>
+        <article>
+          <div class="metric-label">COMPATIBILITY REPAIRS <span>⌁</span></div>
+          <strong id="metric-repaired">—</strong
+          ><small>Proposed, checked, retested</small>
+        </article>
+        <article>
+          <div class="metric-label">SAFELY REJECTED <span>◇</span></div>
+          <strong id="metric-blocked">—</strong
+          ><small>Original source preserved</small>
+        </article>
+      </section>
+      <section class="run-toolbar">
+        <div>
+          <span class="dot" id="run-dot"></span
+          ><strong id="run-title">Ready for your first run</strong
+          ><span id="run-label" class="badge">IDLE</span>
+        </div>
+        <div class="toolbar-actions">
+          <button id="export-button" disabled>↓ Export evidence</button
+          ><button id="analyze-button" disabled>Analyze repository ↗</button>
+        </div>
+      </section>
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-tab="overview">
+          Overview</button
+        ><button role="tab" aria-selected="false" data-tab="evidence">
+          Execution evidence <span id="event-count">0</span></button
+        ><button role="tab" aria-selected="false" data-tab="patch">
+          Review patch <span id="patch-count">0</span>
+        </button>
+      </div>
+      <section id="overview" class="tab-panel">
+        <div class="overview-grid">
+          <article class="panel graph-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Dependency impact</h2>
+                <p>Source files connected to the packages they import</p>
+              </div>
+              <span class="subtle-tag">STATIC ANALYSIS</span>
+            </div>
+            <div id="graph" class="graph">
+              <div class="graph-empty">
+                <div class="empty-icon">◈</div>
+                <h3>See the shape of your dependencies.</h3>
+                <p>
+                  Run the offline demo to trace imports, inspect upgrades,<br />and
+                  follow every validation decision.
+                </p>
+              </div>
+            </div>
+            <div class="graph-legend">
+              <span><i class="legend-file"></i> Source file</span
+              ><span><i class="legend-package"></i> Dependency</span
+              ><span class="graph-hint"
+                >Select a dependency to inspect its evidence</span
+              >
+            </div>
+          </article>
+          <article class="panel policy-panel">
+            <div class="panel-heading">
+              <h2>Execution policy</h2>
+              <span class="subtle-tag">EXPLICIT BY DESIGN</span>
+            </div>
+            <div class="policy-row">
+              <span class="policy-icon">✓</span>
+              <div>
+                Baseline before upgrades<small
+                  >Separate existing failures from regressions</small
+                >
+              </div>
+            </div>
+            <div class="policy-row">
+              <span class="policy-icon">✓</span>
+              <div>
+                Disposable workspaces<small
+                  >Validate without editing your repository</small
+                >
+              </div>
+            </div>
+            <div class="policy-row">
+              <span class="policy-icon">✓</span>
+              <div>
+                Security gate<small
+                  >Block vulnerable or unverified candidates</small
+                >
+              </div>
+            </div>
+            <div class="policy-row">
+              <span class="policy-icon">✓</span>
+              <div>
+                Review before apply<small
+                  >Exact preimage and source freshness checks</small
+                >
+              </div>
+            </div>
+            <div class="policy-note" id="policy-note">
+              Offline demo uses local API fixtures and real subprocess tests. No
+              AI key or network required.
+            </div>
+          </article>
+        </div>
+        <article class="panel dependencies-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Upgrade decisions</h2>
+              <p>Every accepted change earns its place.</p>
+            </div>
+            <span id="candidate-note" class="muted">No run selected</span>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>PACKAGE</th>
+                  <th>VERSION PATH</th>
+                  <th>IMPACT</th>
+                  <th>RISK SIGNAL</th>
+                  <th>DECISION</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="dependencies">
+                <tr>
+                  <td colspan="6" class="table-empty">
+                    Your upgrade decisions will appear here after a run.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="detail" class="detail" hidden></div>
+        </article>
+      </section>
+      <section id="evidence" class="tab-panel" hidden>
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Execution journal</h2>
+              <p>Hash-linked events, command results, and validation output.</p>
+            </div>
+            <span class="subtle-tag" id="integrity-label">NO RUN</span>
+          </div>
+          <div id="events" class="events">
+            <p class="muted">Run an analysis to collect execution evidence.</p>
+          </div>
+        </article>
+      </section>
+      <section id="patch" class="tab-panel" hidden>
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Review the proposed change</h2>
+              <p>
+                Validated in a disposable copy. Your source stays untouched
+                until applied.
+              </p>
+            </div>
+            <button id="apply-button" class="primary" disabled>
+              Apply reviewed patch
+            </button>
+          </div>
+          <div id="diffs" class="diffs">
+            <p class="muted">No patch available yet.</p>
+          </div>
+        </article>
+      </section>
+      <footer>
+        <span
+          >DEPGRAPH <span class="footer-separator">/</span> Evidence over
+          guesswork.</span
+        ><span id="footer-status">Python dependency maintenance · v0.2.0</span>
+      </footer>
+    </main>
+    <dialog id="apply-dialog">
+      <h2>Apply this reviewed patch?</h2>
+      <p>
+        DepGraph will verify the repository has not changed, then write the
+        validated changes. Review the diff before continuing.
+      </p>
+      <div>
+        <button id="cancel-apply">Cancel</button
+        ><button id="confirm-apply" class="primary">Apply changes</button>
+      </div>
+    </dialog>
+    <script src="/app.js"></script>
+  </body>
+</html>

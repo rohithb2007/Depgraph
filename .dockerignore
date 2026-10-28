@@ -1,5 +1,9 @@
 .git
 .gitignore
+.venv
+.depgraph
+agent
+target-repo
 .env
 __pycache__
 *.pyc
