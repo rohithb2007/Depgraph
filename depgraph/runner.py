@@ -8,6 +8,8 @@ import tempfile
 import time
 from pathlib import Path
 
+from .safety import execution_environment, redact
+
 
 def execute(command, cwd, timeout=180, env=None):
     started = time.time()
@@ -40,7 +42,7 @@ def execute(command, cwd, timeout=180, env=None):
         for stream in (out, err):
             stream.seek(0, 2)
             stream.seek(max(0, stream.tell() - 24000))
-            outputs.append(stream.read().decode("utf-8", errors="replace"))
+            outputs.append(redact(stream.read().decode("utf-8", errors="replace")))
     return {
         "command": command,
         "return_code": process.returncode,
@@ -57,13 +59,7 @@ class VenvRunner:
 
     def validate(self, repo: Path):
         with tempfile.TemporaryDirectory(prefix="depgraph-env-") as folder:
-            # Strip common interpreter and credential variables from target execution.
-            env = {
-                k: v
-                for k, v in os.environ.items()
-                if not any(word in k.upper() for word in ("TOKEN", "SECRET", "PASSWORD", "API_KEY"))
-                and k not in {"PYTHONPATH", "PYTHONHOME", "VIRTUAL_ENV"}
-            }
+            env = execution_environment()
             commands = []
             python = str(Path(folder) / ("Scripts/python.exe" if os.name == "nt" else "bin/python"))
             steps = [
@@ -74,7 +70,11 @@ class VenvRunner:
                         python,
                         "-m",
                         "pip",
+                        "--isolated",
                         "install",
+                        "--index-url",
+                        "https://pypi.org/simple",
+                        "--only-binary=:all:",
                         "--disable-pip-version-check",
                         "-r",
                         "requirements.txt",

@@ -9,6 +9,8 @@ from pathlib import Path
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 
+from .safety import PRIVATE_DIRS
+
 IGNORED = {
     ".git",
     ".venv",
@@ -23,6 +25,7 @@ IGNORED = {
     "dist",
     ".ruff_cache",
 }
+IGNORED.update(PRIVATE_DIRS)
 ALIASES = {
     "yaml": "pyyaml",
     "PIL": "pillow",

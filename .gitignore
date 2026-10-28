@@ -2,6 +2,35 @@
 .env
 agent/.env
 *.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+credentials.json
+service-account.json
+service_account.json
+id_rsa
+id_ed25519
+id_ecdsa
+.netrc
+.pypirc
+.npmrc
+.aws/
+.azure/
+.ssh/
+.gnupg/
+.kube/
+.gcloud/
+*.tfstate
+*.tfstate.*
+depgraph-report.html
+depgraph_run_log.json
+depgraph_report.html
 
 # Python bytecode and cache
 __pycache__/

@@ -77,7 +77,7 @@ Apply is separate from analysis. It verifies event integrity, the patch digest, 
 python -m pip install -e ".[ai]"
 ```
 
-Set `GEMINI_API_KEY` and `DEPGRAPH_MODEL` in your environment to a model available to your account. No model name is assumed. Gemini receives the selected application's source and failing test output; enable it only when you accept sending that content to the provider. Never put credentials in source control.
+Set `DEPGRAPH_ENABLE_AI=1`, `GEMINI_API_KEY`, and `DEPGRAPH_MODEL` in your environment to explicitly enable a model available to your account. No model name is assumed. Gemini receives the selected application's source and redacted failing test output; enable it only when you accept sending that content to the provider. Source containing recognized credential patterns is rejected before a request. Never put credentials in source control.
 
 Repairs are attempted only after a passing baseline, successful installation, and a test-stage regression. At most three importing application files are considered, one proposal per file. Tests are protected. Proposed changes must match a unique source span, parse as Python, preserve assertion count, and avoid adding exception handlers. Failed proposals are reverted. These checks constrain edits; they do not prove semantic correctness or make generated code trustworthy. Without configured AI, a failing real upgrade is rolled back.
 
@@ -127,6 +127,8 @@ The image runs the offline CLI demo as a non-root user. Container build needs ac
 ## Scope and trust
 
 This release is a single-user local developer tool. Disposable copies and virtual environments isolate source changes and dependencies; **they do not sandbox malicious code**. Run only trusted repositories on the host. Host filesystem and network access remain possible from target execution. Common credential environment variables and `.env`, `.key`, and `.pem` files are omitted from execution, but this is not a complete secret isolation mechanism.
+
+Target commands receive an allowlist of system variables, not the parent application's credential environment. Pip user configuration is disabled, and target installation requires wheels from PyPI; packages available only as source distributions fail closed. Before committing, run `python scripts/scan_secrets.py` to scan staged contents and `python scripts/scan_secrets.py --history` to scan reachable history. Enable the local guard with `git config --local core.hooksPath .githooks`. See [SECURITY.md](SECURITY.md) for privacy controls and remaining limits.
 
 OSV is checked for direct upgrade candidates; transitive vulnerability auditing, lockfile generation with artifact hashes, multi-language manifests, hostile-code container execution, distributed workers, and automatic PR publication are not implemented. Hash-linked logs detect accidental edits relative to the stored chain; an actor who can rewrite the whole artifact can regenerate hashes. Current run history loads complete artifacts and is intended for local project scale.
 

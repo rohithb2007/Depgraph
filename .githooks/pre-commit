@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+if [ -x .venv/Scripts/python.exe ]; then
+  exec .venv/Scripts/python.exe scripts/scan_secrets.py
+elif [ -x .venv/bin/python ]; then
+  exec .venv/bin/python scripts/scan_secrets.py
+else
+  echo 'DepGraph secret check needs .venv. Install the project environment before committing.' >&2
+  exit 1
+fi

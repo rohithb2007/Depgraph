@@ -30,3 +30,18 @@ The Windows agent sandbox blocks loopback connections and some process terminati
 ## Not claimed as verified
 
 Live Gemini calls were not made; there was no configured key/model. The CI matrix is configured but has not been executed remotely. Docker build/runtime has not been validated in this session. No load, hostile-code containment, or production deployment claim is made.
+
+## October 29, 2026 hardening pass
+
+- 48 local tests passed, including 16 subtest cases. New tests cover staged-secret blocking without
+  printing values, credential-file detection, subprocess environment allowlisting, AI opt-in,
+  AI rejection of credential-bearing source, and cross-site HTTP/read restrictions.
+- Installed core, development, auditing, and optional AI dependencies were checked with pip-audit;
+  no known vulnerabilities were reported at the time of the audit. No live AI requests were made.
+- GitHub reported secret scanning and push protection already enabled. Dependabot security updates
+  and private vulnerability reporting were enabled. The API continued reporting non-provider
+  pattern scanning disabled after an enable request, so that optional feature is not claimed enabled.
+- The secret checker scans staged content before commit and reachable commit contents in CI. Workflow
+  actions are pinned to official immutable revisions; checkout does not retain authentication credentials.
+- Credential exclusions, redacted command output, wheel-only target installs, and explicit AI consent
+  reduce accidental leaks. They do not turn host execution into a secure sandbox or guarantee safety.

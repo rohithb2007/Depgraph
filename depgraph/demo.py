@@ -3,13 +3,13 @@
 This deliberately uses local modules rather than claiming to query PyPI or OSV.
 """
 
-import os
 import sys
 import tempfile
 from pathlib import Path
 
 from .engine import Engine
 from .runner import execute
+from .safety import execution_environment
 
 APP = """import responsekit
 import formatkit
@@ -82,7 +82,7 @@ class DemoRunner:
             }
             for name, content in modules.items():
                 Path(folder, f"{name}.py").write_text(content, encoding="utf-8")
-            env = {**os.environ, "PYTHONPATH": folder, "PYTHONDONTWRITEBYTECODE": "1"}
+            env = {**execution_environment(), "PYTHONPATH": folder, "PYTHONDONTWRITEBYTECODE": "1"}
             result = execute(
                 [sys.executable, "-B", "-m", "unittest", "discover", "-s", "tests", "-v"],
                 repo,

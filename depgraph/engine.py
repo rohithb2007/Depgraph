@@ -13,6 +13,7 @@ from .project import bump, graph, inventory, manifest, source_files
 from .registry import Registry
 from .repair import GeminiRepair, checked_patch
 from .runner import VenvRunner
+from .safety import private_path
 from .store import Store, digest, now, verify_events
 
 
@@ -55,7 +56,7 @@ class Engine:
                 work.mkdir()
                 for source in source_files(root):
                     # Credentials and generated artifacts are not copied into test environments.
-                    if source.name == ".env" or source.name.endswith((".env", ".pem", ".key")):
+                    if private_path(source.relative_to(root)):
                         continue
                     target = work / source.relative_to(root)
                     target.parent.mkdir(parents=True, exist_ok=True)
@@ -208,7 +209,7 @@ class Engine:
                         candidate["attempts"].append(
                             {
                                 "file": relative,
-                                "rejected": f"Repair provider failed: {type(exc).__name__}: {exc}",
+                                "rejected": f"Repair provider failed: {type(exc).__name__}",
                             }
                         )
                         continue

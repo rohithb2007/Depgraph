@@ -44,6 +44,10 @@ class Workbench(ThreadingHTTPServer):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def setup(self):
+        super().setup()
+        self.connection.settimeout(10)
+
     def send(self, status, value, content_type="application/json"):
         body = json.dumps(value).encode() if content_type == "application/json" else value.encode()
         self.send_response(status)
@@ -51,10 +55,13 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Cross-Origin-Resource-Policy", "same-origin")
         self.send_header(
             "Content-Security-Policy",
             "default-src 'self'; style-src 'self'; script-src 'self'; "
-            "connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'",
+            "connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; "
+            "base-uri 'none'; form-action 'self'; object-src 'none'",
         )
         self.end_headers()
         self.wfile.write(body)
@@ -66,7 +73,7 @@ class Handler(BaseHTTPRequestHandler):
         }
 
     def do_GET(self):
-        if not self.valid_host():
+        if not self.valid_host() or self.headers.get("Sec-Fetch-Site") == "cross-site":
             return self.send(403, {"error": "Local host required"})
         path = urlsplit(self.path).path
         try:
@@ -113,6 +120,7 @@ class Handler(BaseHTTPRequestHandler):
         }
         if (
             not self.valid_host()
+            or self.headers.get("Sec-Fetch-Site") == "cross-site"
             or (origin and origin not in expected)
             or not secrets.compare_digest(self.headers.get("X-DepGraph-Token", ""), self.server.token)
         ):

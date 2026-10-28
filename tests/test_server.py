@@ -60,6 +60,20 @@ class ServerTests(unittest.TestCase):
     def test_cross_origin_post_is_rejected(self):
         self.assertEqual(self.request("/api/demo", {}, origin="https://attacker.example")[0], 403)
 
+    def test_fetch_metadata_rejects_cross_site_config_reads(self):
+        req = urllib.request.Request(self.base + "/api/config", headers={"Sec-Fetch-Site": "cross-site"})
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with self.assertRaises(urllib.error.HTTPError) as error:
+            opener.open(req, timeout=5)
+        self.assertEqual(error.exception.code, 403)
+
+    def test_responses_have_privacy_and_embedding_restrictions(self):
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with opener.open(self.base + "/health", timeout=5) as response:
+            self.assertEqual(response.headers["Referrer-Policy"], "no-referrer")
+            self.assertEqual(response.headers["Cross-Origin-Resource-Policy"], "same-origin")
+            self.assertIn("object-src 'none'", response.headers["Content-Security-Policy"])
+
     def test_real_analysis_requires_explicit_trusted_repo(self):
         status, data = self.request("/api/analyze", {})
         self.assertEqual(status, 400)
