@@ -33,7 +33,7 @@ Live Gemini calls were not made; there was no configured key/model. The CI matri
 
 ## October 29, 2026 hardening pass
 
-- 48 local tests passed, including 16 subtest cases. New tests cover staged-secret blocking without
+- 49 local tests passed, including 16 subtest cases. New tests cover staged-secret blocking without
   printing values, credential-file detection, subprocess environment allowlisting, AI opt-in,
   AI rejection of credential-bearing source, and cross-site HTTP/read restrictions.
 - Installed core, development, auditing, and optional AI dependencies were checked with pip-audit;
@@ -52,3 +52,6 @@ Live Gemini calls were not made; there was no configured key/model. The CI matri
   The exception and full-byte-restoration assertions remain intact. Workflow actions now use pinned
   Node 24-compatible revisions. Current platform results are available in
   [GitHub Actions](https://github.com/rohithb2007/Depgraph/actions).
+- The Windows CLI now escapes characters that a redirected legacy console encoding cannot represent,
+  preventing version-arrow output from turning a successful run into an error. A subprocess regression
+  test executes the complete offline demo with ASCII-only output.

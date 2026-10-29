@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from .demo import create_demo
@@ -10,6 +11,11 @@ from .store import Store
 
 
 def main():
+    # Redirected Windows output can use a legacy code page. Escape unsupported
+    # characters instead of turning a successful validation into a CLI failure.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="backslashreplace")
     parser = argparse.ArgumentParser(description="DepGraph dependency maintenance workbench")
     parser.add_argument("--state", default=".depgraph/runs", help="Run artifact directory")
     commands = parser.add_subparsers(dest="command", required=True)
